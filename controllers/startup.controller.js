@@ -30,3 +30,44 @@ export const createStartup = catchAsyncError(async (req, res) => {
 
   res.status(201).json({ message: "Startup created successfully!", startup: newStartup });
 });
+
+export const getStartups = catchAsyncError(async (req, res) => {
+  const { futureScope, stages, programmes } = req.query;
+
+  const categoryFilter = {};
+
+  if (futureScope) {
+    categoryFilter.futureScope = { $regex: futureScope, $options: "i" }; // Case-insensitive partial match
+  }
+  if (stages) {
+    categoryFilter.stages = { $regex: stages, $options: "i" };
+  }
+  if (programmes) {
+    categoryFilter.programmes = { $regex: programmes, $options: "i" };
+  }
+
+  const query = categoryFilter && Object.keys(categoryFilter).length > 0
+    ? { category: { $elemMatch: categoryFilter } } // Match any category object
+    : {}; // No filter, return all startups
+
+  const startups = await startupModel.find(query);
+
+  if (!startups.length) {
+    return res.status(404).json({ message: "No startups found." });
+  }
+
+  res.status(200).json({ message: "Startups retrieved successfully!", startups });
+});
+
+export const getSingleStartup = catchAsyncError(async (req, res) => {
+  if (!req.params.id) {
+    return res.status(400).json({ message: "Startup ID is required." });
+  }
+  const startup = await startupModel.findById(req.params.id);
+
+  if (!startup) {
+    return res.status(404).json({ message: "Startup not found." });
+  }
+
+  res.status(200).json({ message: "Startup retrieved successfully!", startup });
+});

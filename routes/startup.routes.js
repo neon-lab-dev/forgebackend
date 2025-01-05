@@ -1,13 +1,13 @@
 import { Router } from "express";
-import singleUpload from "../middlewares/multer.js";
-import { createStartup } from "../controllers/startup.controller.js";
+import { createStartup, getStartups, getSingleStartup } from "../controllers/startup.controller.js";
 
 const router = Router();
 
 
 
 router.post("/create", createStartup);
-
+router.get("/", getStartups);
+router.get("/:id", getSingleStartup);
 
 
 
