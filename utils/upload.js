@@ -30,7 +30,20 @@ const deleteImage = (fileId) => {
     });
   });
 };
+
+const bulkDeleteFiles = (fileIds) => {
+  return new Promise((resolve, reject) => {
+    imageKit.bulkDeleteFiles(fileIds, (err, result) => {
+      if (err) {
+        return reject(err.message);
+      } else {
+        return resolve(result);
+      }
+    });
+  });
+};
 export {
   uploadImage,
   deleteImage,
+  bulkDeleteFiles
 };

@@ -1,6 +1,7 @@
 import catchAsyncError from "../middlewares/catch-async-error.js"
 import getDataUri from "../utils/getUri.js";
 import { uploadImage, deleteImage } from "../utils/upload.js";
+import imageModel from "../models/file.model.js";
 export const imageUpload = catchAsyncError(async (req, res) => {
 
   if (!req.file) {
@@ -15,19 +16,20 @@ export const imageUpload = catchAsyncError(async (req, res) => {
   if (!image) {
     return res.status(500).json({ message: "Failed to upload image." });
   }
-  const imageData = {
+  const newImage = await imageModel.create({
     fileId: image.fileId,
     name: image.name,
     url: image.url,
     thumbnailUrl: image.thumbnailUrl,
-  }
-  res.status(201).json({ message: "Image uploaded successfully.", image: imageData });
+  })
+  res.status(201).json({ message: "Image uploaded successfully.", image: newImage });
 });
 
 export const imageDelete = catchAsyncError(async (req, res) => {
 
   const { fileId } = req.params;
   const deleted = await deleteImage(fileId);
+  const image = await imageModel.findOneAnddelete({ fileId });
   if (!deleted) {
     return res.status(500).json({ message: "Failed to delete image." });
   }

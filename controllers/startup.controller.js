@@ -1,43 +1,59 @@
 import catchAsyncError from "../middlewares/catch-async-error.js"
 import startupModel from "../models/startup.model.js";
+import imageModel from "../models/file.model.js";
+import { bulkDeleteFiles } from "../utils/upload.js";
 export const createStartup = catchAsyncError(async (req, res) => {
-  const { name, websiteUrl, hardwareTech, hardwareInnovations, about, metricFeatures, category, logo, keyInvestors, CustomersDetails } = req.body;
-
-  if (!name || !websiteUrl || !hardwareTech || !hardwareInnovations || !about) {
-    return res.status(400).json({ message: "All required fields must be provided." });
-  }
-
-  const parsedMetricFeatures = metricFeatures && typeof metricFeatures === "string" ? JSON.parse(metricFeatures) : metricFeatures;
-  const parsedCategory = category && typeof category === "string" ? JSON.parse(category) : category;
-  const parsedLogo = logo && typeof logo === "string" ? JSON.parse(logo) : logo;
-  const parsedKeyInvestors = keyInvestors && typeof keyInvestors === "string" ? JSON.parse(keyInvestors) : keyInvestors;
-  const parsedCustomersDetails = CustomersDetails && typeof CustomersDetails === "string" ? JSON.parse(CustomersDetails) : CustomersDetails;
-
-  const newStartup = new startupModel({
+  const {
     name,
     websiteUrl,
     hardwareTech,
     hardwareInnovations,
     about,
-    logo: parsedLogo,
-    keyInvestors: parsedKeyInvestors || [],
-    CustomersDetails: parsedCustomersDetails || [],
-    metricFeatures: parsedMetricFeatures || [],
-    category: parsedCategory || [],
+    logo,
+    keyInvestors,
+    CustomersDetails,
+    metricFeatures,
+    category,
+  } = req.body;
+
+
+  if (!name || !websiteUrl || !hardwareTech || !hardwareInnovations || !about || !logo) {
+    return res.status(400).json({ message: "All required fields must be provided." });
+  }
+
+
+  if (metricFeatures && !Array.isArray(metricFeatures)) {
+    return res.status(400).json({ message: "Metric features must be an array of objects." });
+  }
+
+  if (category && !Array.isArray(category)) {
+    return res.status(400).json({ message: "Category must be an array of objects." });
+  }
+
+  const newStartup = new startupModel({
+    name,
+    logo,
+    websiteUrl,
+    hardwareTech,
+    hardwareInnovations,
+    about,
+    keyInvestors: keyInvestors || [],
+    CustomersDetails: CustomersDetails || [],
+    metricFeatures: metricFeatures || [],
+    category: category || [],
   });
 
   await newStartup.save();
 
   res.status(201).json({ message: "Startup created successfully!", startup: newStartup });
 });
-
 export const getStartups = catchAsyncError(async (req, res) => {
   const { futureScope, stages, programmes } = req.query;
 
   const categoryFilter = {};
 
   if (futureScope) {
-    categoryFilter.futureScope = { $regex: futureScope, $options: "i" }; // Case-insensitive partial match
+    categoryFilter.futureScope = { $regex: futureScope, $options: "i" };
   }
   if (stages) {
     categoryFilter.stages = { $regex: stages, $options: "i" };
@@ -47,10 +63,15 @@ export const getStartups = catchAsyncError(async (req, res) => {
   }
 
   const query = categoryFilter && Object.keys(categoryFilter).length > 0
-    ? { category: { $elemMatch: categoryFilter } } // Match any category object
-    : {}; // No filter, return all startups
+    ? { category: { $elemMatch: categoryFilter } }
+    : {};
 
-  const startups = await startupModel.find(query);
+  const startups = await startupModel
+    .find(query)
+    .populate("logo")
+    .populate("keyInvestors")
+    .populate("CustomersDetails")
+    .populate("metricFeatures.icon");
 
   if (!startups.length) {
     return res.status(404).json({ message: "No startups found." });
@@ -59,15 +80,197 @@ export const getStartups = catchAsyncError(async (req, res) => {
   res.status(200).json({ message: "Startups retrieved successfully!", startups });
 });
 
+
 export const getSingleStartup = catchAsyncError(async (req, res) => {
   if (!req.params.id) {
     return res.status(400).json({ message: "Startup ID is required." });
   }
-  const startup = await startupModel.findById(req.params.id);
+
+  const startup = await startupModel
+    .findById(req.params.id)
+    .populate("logo") // Populate logo field
+    .populate("keyInvestors") // Populate keyInvestors array
+    .populate("CustomersDetails") // Populate CustomersDetails array
+    .populate("metricFeatures.icon"); // Populate icon field in metricFeatures
 
   if (!startup) {
     return res.status(404).json({ message: "Startup not found." });
   }
 
   res.status(200).json({ message: "Startup retrieved successfully!", startup });
+});
+
+
+
+
+export const editStartup = catchAsyncError(async (req, res) => {
+  const { id } = req.params;
+  const {
+    name,
+    websiteUrl,
+    hardwareTech,
+    hardwareInnovations,
+    about,
+    logo,
+    keyInvestors,
+    CustomersDetails,
+    metricFeatures,
+    category,
+  } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ message: "Startup ID is required." });
+  }
+
+
+  const startup = await startupModel.findById(id);
+
+  if (!startup) {
+    return res.status(404).json({ message: "Startup not found." });
+  }
+
+
+  if (logo && logo !== startup.logo.toString()) {
+
+    const oldLogo = await imageModel.findById(startup.logo);
+    if (oldLogo) {
+      await oldLogo.remove();
+    }
+
+    const newLogo = await imageModel.findById(logo);
+    if (newLogo) {
+      startup.logo = logo;
+    }
+  }
+
+
+  if (keyInvestors) {
+
+    for (let i = 0; i < startup.keyInvestors.length; i++) {
+      const investorImage = await imageModel.findById(startup.keyInvestors[i]);
+      if (!investorImage) {
+        startup.keyInvestors.splice(i, 1);
+      }
+    }
+
+    for (const investorId of keyInvestors) {
+      const investorImage = await imageModel.findById(investorId);
+      if (investorImage) {
+        startup.keyInvestors.push(investorId);
+      }
+    }
+  }
+
+  if (CustomersDetails) {
+    for (let i = 0; i < startup.CustomersDetails.length; i++) {
+      const customerImage = await imageModel.findById(startup.CustomersDetails[i]);
+      if (!customerImage) {
+        startup.CustomersDetails.splice(i, 1);
+      }
+    }
+    for (const customerId of CustomersDetails) {
+      const customerImage = await imageModel.findById(customerId);
+      if (customerImage) {
+        startup.CustomersDetails.push(customerId);
+      }
+    }
+  }
+
+  if (metricFeatures) {
+    for (const feature of metricFeatures) {
+      if (feature.icon) {
+        const oldIcon = await imageModel.findById(feature.icon);
+        if (!oldIcon) {
+          feature.icon = null;
+        }
+        const newIcon = await imageModel.findById(feature.icon);
+        if (newIcon) {
+          feature.icon = feature.icon;
+        }
+      }
+    }
+    startup.metricFeatures = metricFeatures;
+  }
+
+  if (category) {
+    startup.category = category;
+  }
+
+  if (name) startup.name = name;
+  if (websiteUrl) startup.websiteUrl = websiteUrl;
+  if (hardwareTech) startup.hardwareTech = hardwareTech;
+  if (hardwareInnovations) startup.hardwareInnovations = hardwareInnovations;
+  if (about) startup.about = about;
+
+  await startup.save();
+
+  res.status(200).json({
+    message: "Startup updated successfully!",
+    startup,
+  });
+});
+
+export const deleteStartup = catchAsyncError(async (req, res) => {
+  const { id } = req.params; // Startup ID from URL
+
+  if (!id) {
+    return res.status(400).json({ message: "Startup ID is required." });
+  }
+
+  // Fetch the startup by ID and populate image references
+  const startup = await startupModel
+    .findById(req.params.id)
+    .populate("logo") // Populate logo field
+    .populate("keyInvestors") // Populate keyInvestors array
+    .populate("CustomersDetails") // Populate CustomersDetails array
+    .populate("metricFeatures.icon"); // Populate icon field in metricFeatures
+  if (!startup) {
+    return res.status(404).json({ message: "Startup not found." });
+  }
+
+  // Collect all fileIds (logo, keyInvestors, CustomersDetails, and metricFeatures)
+  const fileIds = [];
+
+  // Logo
+  if (startup.logo) fileIds.push(startup.logo.fileId);
+
+  // KeyInvestors (array of ObjectIds, populated)
+  startup.keyInvestors.forEach((investor) => {
+    if (investor && investor.fileId) {
+      fileIds.push(investor.fileId);
+    }
+  });
+
+  // CustomersDetails (array of ObjectIds, populated)
+  startup.CustomersDetails.forEach((customer) => {
+    if (customer && customer.fileId) {
+      fileIds.push(customer.fileId);
+    }
+  });
+
+  // MetricFeatures (array of objects, populated)
+  startup.metricFeatures.forEach((feature) => {
+    if (feature.icon && feature.icon.fileId) {
+      fileIds.push(feature.icon.fileId);
+    }
+  });
+  console.log(fileIds)
+  // Remove images from ImageKit using bulkDeleteFiles utility
+  try {
+    const result = await bulkDeleteFiles(fileIds); // Delete from ImageKit
+
+    // Now delete images from Image model
+    await imageModel.deleteMany({ fileId: { $in: fileIds } }); // Delete images from Image model
+
+
+    // Finally, delete the startup
+    await startupModel.findByIdAndDelete(id);
+
+    res.status(200).json({
+      message: "Images successfully deleted from ImageKit, Image model, and references removed from Startup.",
+      result,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting images: " + err.message });
+  }
 });

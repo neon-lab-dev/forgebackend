@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 
-export const FileSchema = new mongoose.Schema({
+const ImageSchema = new mongoose.Schema({
   fileId: {
     type: String,
+    required: true,
   },
   name: {
     type: String,
+    required: true,
   },
   url: {
     type: String,
@@ -15,3 +17,5 @@ export const FileSchema = new mongoose.Schema({
     type: String,
   },
 });
+
+export default mongoose.model("Image", ImageSchema);
