@@ -48,17 +48,19 @@ const StartupSchema = new Schema({
       ref: "Image", // Reference the Image model
     },
   }],
-  category: [{
-    futureScope: {
-      type: String,
-    },
+  category: {
+    futureScope: [
+      {
+        type: String,
+      }
+    ],
     stages: {
       type: String,
     },
     programmes: {
       type: String,
     },
-  }],
+  },
 });
 
 export default model("Startup", StartupSchema);

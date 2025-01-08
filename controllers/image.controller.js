@@ -29,7 +29,7 @@ export const imageDelete = catchAsyncError(async (req, res) => {
 
   const { fileId } = req.params;
   const deleted = await deleteImage(fileId);
-  const image = await imageModel.findOneAnddelete({ fileId });
+  const image = await imageModel.findOneAndDelete({ fileId });
   if (!deleted) {
     return res.status(500).json({ message: "Failed to delete image." });
   }

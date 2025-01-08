@@ -26,8 +26,8 @@ export const createStartup = catchAsyncError(async (req, res) => {
     return res.status(400).json({ message: "Metric features must be an array of objects." });
   }
 
-  if (category && !Array.isArray(category)) {
-    return res.status(400).json({ message: "Category must be an array of objects." });
+  if (category && !Array.isArray(category.futureScope)) {
+    return res.status(400).json({ message: "Category future scope must be  an array of objects." });
   }
 
   const newStartup = new startupModel({
@@ -40,7 +40,7 @@ export const createStartup = catchAsyncError(async (req, res) => {
     keyInvestors: keyInvestors || [],
     CustomersDetails: CustomersDetails || [],
     metricFeatures: metricFeatures || [],
-    category: category || [],
+    category,
   });
 
   await newStartup.save();
