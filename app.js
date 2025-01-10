@@ -8,6 +8,7 @@ import morgan from "morgan";
 import { formatDate } from "./utils/date.js";
 import startupRoute from "./routes/startup.routes.js";
 import imageRoute from "./routes/image.routes.js";
+import userRoute from "./routes/user.routes.js";
 // Load environment variables
 config();
 
@@ -28,6 +29,7 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/v1/startup", startupRoute);
 app.use("/api/v1/image", imageRoute);
+app.use("/api/v1/auth", userRoute);
 
 
 // Function to format the date
