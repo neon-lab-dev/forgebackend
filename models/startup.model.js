@@ -61,6 +61,11 @@ const StartupSchema = new Schema({
       type: String,
     },
   },
+  status : {
+    type: String,
+    enum: ["Active", "Inactive"],
+    default: "Active",
+  }
 });
 
 export default model("Startup", StartupSchema);

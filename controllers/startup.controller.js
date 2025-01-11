@@ -47,6 +47,7 @@ export const createStartup = catchAsyncError(async (req, res) => {
 
   res.status(201).json({ message: "Startup created successfully!", startup: newStartup });
 });
+
 export const getStartups = catchAsyncError(async (req, res) => {
   const { futureScope, stages, programmes } = req.query;
 
@@ -274,3 +275,47 @@ export const deleteStartup = catchAsyncError(async (req, res) => {
     res.status(500).json({ message: "Error deleting images: " + err.message });
   }
 });
+
+export const makeInactive = async (req, res) => {
+  const { id } = req.params; // Startup ID from URL
+
+  if (!id) {
+    return res.status(400).json({ message: "Startup ID is required." });
+  }
+
+  const result = await startupModel.findByIdAndUpdate(id,
+    {
+      status: "Inactive"
+    },
+    {
+      new: true,
+      runValidators: true,
+    });
+
+  return res.status(200).json({
+    message: "Status changed to inactive successfully",
+    result,
+  });
+};
+
+export const makeActive = async (req, res) => {
+  const { id } = req.params; // Startup ID from URL
+
+  if (!id) {
+    return res.status(400).json({ message: "Startup ID is required." });
+  }
+
+  const result = await startupModel.findByIdAndUpdate(id,
+    {
+      status: "Active"
+    },
+    {
+      new: true,
+      runValidators: true,
+    });
+
+  return res.status(200).json({
+    message: "Status changed to active successfully",
+    result,
+  });
+};
