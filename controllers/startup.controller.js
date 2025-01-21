@@ -21,7 +21,7 @@ export const createStartup = catchAsyncError(async (req, res) => {
 
   const newStartup = new startupModel({
     name,
-    logo,
+    logo : logo || '',
     websiteUrl,
     hardwareTech,
     hardwareInnovations,
