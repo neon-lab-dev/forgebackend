@@ -17,18 +17,7 @@ export const createStartup = catchAsyncError(async (req, res) => {
   } = req.body;
 
 
-  if (!name || !websiteUrl || !hardwareTech || !hardwareInnovations || !about || !logo) {
-    return res.status(400).json({ message: "All required fields must be provided." });
-  }
-
-
-  if (metricFeatures && !Array.isArray(metricFeatures)) {
-    return res.status(400).json({ message: "Metric features must be an array of objects." });
-  }
-
-  if (category && !Array.isArray(category.futureScope)) {
-    return res.status(400).json({ message: "Category future scope must be  an array of objects." });
-  }
+  
 
   const newStartup = new startupModel({
     name,
