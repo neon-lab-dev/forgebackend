@@ -21,11 +21,13 @@ const StartupSchema = new Schema({
   },
   keyInvestors: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Image", // Reference the Image model
+    ref: "Image",
+    default:null// Reference the Image model
   }],
   CustomersDetails: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Image", // Reference the Image model
+    ref: "Image",
+    default:null// Reference the Image model
   }],
   about: {
     type: String,
@@ -39,7 +41,8 @@ const StartupSchema = new Schema({
     },
     icon: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Image", // Reference the Image model
+      ref: "Image",
+      default:null// Reference the Image model
     },
   }],
   category: {
