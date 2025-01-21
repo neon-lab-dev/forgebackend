@@ -4,18 +4,14 @@ import { uploadImage, deleteImage } from "../utils/upload.js";
 import imageModel from "../models/file.model.js";
 export const imageUpload = catchAsyncError(async (req, res) => {
 
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded." });
-  }
+  
 
   const image = await uploadImage(
     getDataUri(req.file).content,
     getDataUri(req.file).fileName,
     "mind-forge"
   );
-  if (!image) {
-    return res.status(500).json({ message: "Failed to upload image." });
-  }
+  
   const newImage = await imageModel.create({
     fileId: image.fileId,
     name: image.name,
