@@ -57,10 +57,13 @@ const StartupSchema = new Schema({
     stages: {
       type: String,
     },
-    programmes: {
+    programmes: [{
       type: String,
-    },
+    }],
   },
+  grants: [{
+    type: String,
+  }],
 });
 
 export default model("Startup", StartupSchema);
