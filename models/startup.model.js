@@ -54,15 +54,21 @@ const StartupSchema = new Schema({
     stages: {
       type: String,
     },
-    programmes: {
+    programmes: [{
       type: String,
-    },
+    }],
   },
+
+  grants: [{
+    type: String,
+  }],
+
   status : {
     type: String,
     enum: ["Active", "Inactive"],
     default: "Active",
   }
+
 });
 
 export default model("Startup", StartupSchema);

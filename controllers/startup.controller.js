@@ -14,10 +14,28 @@ export const createStartup = catchAsyncError(async (req, res) => {
     CustomersDetails,
     metricFeatures,
     category,
+    grants
   } = req.body;
 
 
-  
+  if (!name || !websiteUrl || !hardwareTech || !hardwareInnovations || !about || !logo) {
+    return res.status(400).json({ message: "All required fields must be provided." });
+  }
+
+
+  if (metricFeatures && !Array.isArray(metricFeatures)) {
+    return res.status(400).json({ message: "Metric features must be an array of objects." });
+  }
+  if (grants && !Array.isArray(grants)) {
+    return res.status(400).json({ message: "Grants must be an array of objects." });
+  }
+
+  if (category && !Array.isArray(category.futureScope)) {
+    return res.status(400).json({ message: "Category future scope must be  an array of objects." });
+  }
+  if (category && !Array.isArray(category.programmes)) {
+    return res.status(400).json({ message: "Category programmes must be  an array of objects." });
+  }
 
   const newStartup = new startupModel({
     name,
@@ -30,6 +48,7 @@ export const createStartup = catchAsyncError(async (req, res) => {
     CustomersDetails: CustomersDetails || [],
     metricFeatures: metricFeatures || [],
     category,
+    grants: grants || []
   });
 
   await newStartup.save();
@@ -39,22 +58,27 @@ export const createStartup = catchAsyncError(async (req, res) => {
 
 export const getStartups = catchAsyncError(async (req, res) => {
   const { futureScope, stages, programmes } = req.query;
+  const query = {};
 
-  const categoryFilter = {};
-
+  // Build the query with proper nested paths
   if (futureScope) {
-    categoryFilter.futureScope = { $regex: futureScope, $options: "i" };
+    query["category.futureScope"] = {
+      $regex: futureScope,
+      $options: "i"
+    };
   }
   if (stages) {
-    categoryFilter.stages = { $regex: stages, $options: "i" };
+    query["category.stages"] = {
+      $regex: stages,
+      $options: "i"
+    };
   }
   if (programmes) {
-    categoryFilter.programmes = { $regex: programmes, $options: "i" };
+    query["category.programmes"] = {
+      $regex: programmes,
+      $options: "i"
+    };
   }
-
-  const query = categoryFilter && Object.keys(categoryFilter).length > 0
-    ? { category: { $elemMatch: categoryFilter } }
-    : {};
 
   const startups = await startupModel
     .find(query)
@@ -106,6 +130,7 @@ export const editStartup = catchAsyncError(async (req, res) => {
     CustomersDetails,
     metricFeatures,
     category,
+    grants
   } = req.body;
 
   if (!id) {
@@ -185,6 +210,7 @@ export const editStartup = catchAsyncError(async (req, res) => {
   if (category) {
     startup.category = category;
   }
+  if (grants) startup.grants = grants;
 
   if (name) startup.name = name;
   if (websiteUrl) startup.websiteUrl = websiteUrl;
