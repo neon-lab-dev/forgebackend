@@ -22,7 +22,7 @@ export const createStartup = catchAsyncError(async (req, res) => {
 
   const newStartup = new startupModel({
     name,
-    logo : logo || '',
+    logo: logo || '',
     websiteUrl,
     hardwareTech,
     hardwareInnovations,
@@ -317,3 +317,35 @@ export const makeActive = async (req, res) => {
     result,
   });
 };
+// export const getProgrammes = catchAsyncError(async (req, res) => {
+//   // Get distinct programmes from all startups' category.programmes
+//   const programmes = await startupModel.distinct('category.programmes');
+//   // const programmes = await startupModel.find();
+
+
+//   if (!programmes.length) {
+//     return res.status(404).json({ message: "No programmes found." });
+//   }
+
+//   res.status(200).json({
+//     message: "Programmes retrieved successfully!",
+//     programmes
+//   });
+// });
+
+export const getProgramsAndGrants = catchAsyncError(async (req, res) => {
+  const programmes = await startupModel.distinct('category.programmes');
+  const grants = await startupModel.distinct('grants');
+
+  if ((!programmes || programmes.length === 0) && (!grants || grants.length === 0)) {
+    return res.status(404).json({ message: "No programmes or grants found." });
+  }
+
+  res.status(200).json({
+    message: "Programs and grants retrieved successfully!",
+    data: {
+      programmes,
+      grants,
+    },
+  });
+});
